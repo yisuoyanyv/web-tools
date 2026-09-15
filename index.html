@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Tools - 在线工具集合</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🛠️ Web Tools</h1>
+                <p class="subtitle">精选实用在线工具，分类整理，便捷使用</p>
+            </div>
+        </header>
+
+        <!-- 搜索栏 -->
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-box" placeholder="搜索工具...">
+            <button class="search-btn">搜索</button>
+        </div>
+
+        <!-- 分类导航 -->
+        <nav class="categories">
+            <button class="category-btn active" data-category="all">全部</button>
+            <button class="category-btn" data-category="converter">转换工具</button>
+            <button class="category-btn" data-category="generator">生成工具</button>
+            <button class="category-btn" data-category="calculator">计算工具</button>
+            <button class="category-btn" data-category="utility">实用工具</button>
+        </nav>
+
+        <!-- 工具网格 -->
+        <div class="tools-grid" id="toolsGrid">
+            <!-- 工具卡片将通过 JavaScript 动态插入 -->
+        </div>
+
+        <!-- 空状态提示 -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <p>未找到匹配的工具 😕</p>
+        </div>
+    </div>
+
+    <!-- 打赏区域 -->
+    <aside class="donation-panel">
+        <div class="donation-card">
+            <h3>💝 支持我们</h3>
+            <p>如果这些工具对您有帮助，欢迎打赏支持</p>
+            <div class="qr-code-container">
+                <div class="qr-code-placeholder">
+                    <p>📱 打赏二维码</p>
+                    <p class="qr-text">(二维码占位)</p>
+                </div>
+            </div>
+            <p class="donation-tips">扫码打赏或转账，谢谢您的支持！</p>
+        </div>
+    </aside>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <p>&copy; 2025 Web Tools. All rights reserved. | Made with ❤️</p>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
