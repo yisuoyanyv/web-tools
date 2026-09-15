@@ -106,12 +106,15 @@ const tools = [
 document.addEventListener('DOMContentLoaded', () => {
     initializeTools();
     setupEventListeners();
+    setupDonationPanel();
 });
 
 // 初始化工具网格
 function initializeTools() {
     const toolsGrid = document.getElementById('toolsGrid');
-    renderTools(tools);
+    if (toolsGrid) {
+        renderTools(tools);
+    }
 }
 
 // 渲染工具卡片
@@ -192,33 +195,54 @@ function setupEventListeners() {
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.querySelector('.search-btn');
 
-    function performSearch() {
-        const query = searchInput.value.toLowerCase().trim();
-        if (query === '') {
-            renderTools(tools);
-            return;
+    if (searchInput && searchBtn) {
+        function performSearch() {
+            const query = searchInput.value.toLowerCase().trim();
+            if (query === '') {
+                renderTools(tools);
+                return;
+            }
+
+            const filtered = tools.filter(tool =>
+                tool.name.toLowerCase().includes(query) ||
+                tool.description.toLowerCase().includes(query) ||
+                tool.category.toLowerCase().includes(query)
+            );
+
+            renderTools(filtered);
         }
 
-        const filtered = tools.filter(tool =>
-            tool.name.toLowerCase().includes(query) ||
-            tool.description.toLowerCase().includes(query) ||
-            tool.category.toLowerCase().includes(query)
-        );
+        searchBtn.addEventListener('click', performSearch);
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
 
-        renderTools(filtered);
+        // 搜索框聚焦时清空默认分类
+        searchInput.addEventListener('focus', () => {
+            const categoryBtns = document.querySelectorAll('.category-btn');
+            categoryBtns.forEach(btn => btn.classList.remove('active'));
+            document.querySelector('[data-category="all"]').classList.add('active');
+        });
     }
+}
 
-    searchBtn.addEventListener('click', performSearch);
-    searchInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            performSearch();
+// 设置打赏面板
+function setupDonationPanel() {
+    const donationCloseBtn = document.getElementById('donationCloseBtn');
+    const donationCard = document.getElementById('donationCard');
+
+    if (donationCloseBtn && donationCard) {
+        donationCloseBtn.addEventListener('click', () => {
+            donationCard.classList.add('hidden');
+            // 保存用户的关闭偏好到本地存储
+            localStorage.setItem('donation-panel-closed', 'true');
+        });
+
+        // 检查用户是否之前关闭过面板
+        if (localStorage.getItem('donation-panel-closed') === 'true') {
+            donationCard.classList.add('hidden');
         }
-    });
-
-    // 搜索框聚焦时清空默认分类
-    searchInput.addEventListener('focus', () => {
-        const categoryBtns = document.querySelectorAll('.category-btn');
-        categoryBtns.forEach(btn => btn.classList.remove('active'));
-        document.querySelector('[data-category="all"]').classList.add('active');
-    });
+    }
 }
