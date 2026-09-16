@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR 码生成 - Web Tools</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-link">← 返回首页</a>
+
+        <div class="tool-content">
+            <h1>📱 QR 码生成</h1>
+            <p>将文本或 URL 转换为二维码</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
+                <!-- 输入区 -->
+                <div>
+                    <h2>输入内容</h2>
+                    <textarea id="qrInput" placeholder="输入文本或 URL..." style="height: 200px; width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1rem;"></textarea>
+
+                    <div style="margin-top: 20px;">
+                        <label for="qrSize">二维码大小：</label>
+                        <select id="qrSize" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                            <option value="200">小 (200px)</option>
+                            <option value="300" selected>中 (300px)</option>
+                            <option value="400">大 (400px)</option>
+                        </select>
+                    </div>
+
+                    <button onclick="generateQR()" style="width: 100%; margin-top: 15px;">生成二维码</button>
+                </div>
+
+                <!-- 预览区 -->
+                <div>
+                    <h2>二维码预览</h2>
+                    <div style="display: flex; justify-content: center; align-items: center; min-height: 300px; background-color: #f9fafb; border-radius: 8px;">
+                        <div id="qrcode"></div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="downloadQR()" style="flex: 1;">下载二维码</button>
+                        <button onclick="copyQRData()" style="flex: 1;">复制数据</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <h2>快速生成</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                    <button onclick="quickGenerate('https://github.com')" style="padding: 10px;">GitHub</button>
+                    <button onclick="quickGenerate('https://www.google.com')" style="padding: 10px;">Google</button>
+                    <button onclick="quickGenerate('https://www.baidu.com')" style="padding: 10px;">百度</button>
+                    <button onclick="quickGenerate('mailto:example@email.com')" style="padding: 10px;">电子邮件</button>
+                    <button onclick="quickGenerate('tel:+86-10-1234-5678')" style="padding: 10px;">电话</button>
+                    <button onclick="quickGenerate('https://www.youtube.com')" style="padding: 10px;">YouTube</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <h2>使用说明</h2>
+                <ul style="line-height: 2;">
+                    <li>输入要转换成二维码的文本或 URL</li>
+                    <li>选择合适的二维码大小</li>
+                    <li>点击"生成二维码"创建二维码</li>
+                    <li>可以下载二维码为 PNG 图片或复制数据</li>
+                    <li>支持文本、URL、邮箱、电话号码等各种内容</li>
+                </ul>
+            </div>
+
+            <div style="margin-top: 30px; padding: 20px; background-color: #f0f4ff; border-radius: 8px;">
+                <h3>💡 QR 码说明</h3>
+                <ul style="line-height: 2;">
+                    <li>QR 码（二维码）是一种二维条码标准</li>
+                    <li>可以用手机摄像头扫描识别</li>
+                    <li>可以存储文本、URL、电话、邮箱等信息</li>
+                    <li>广泛应用于营销、支付、身份验证等领域</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let qrInstance = null;
+
+        function generateQR() {
+            const text = document.getElementById('qrInput').value.trim();
+            const size = parseInt(document.getElementById('qrSize').value);
+
+            if (!text) {
+                alert('请输入要生成二维码的内容');
+                return;
+            }
+
+            // 清空之前的二维码
+            document.getElementById('qrcode').innerHTML = '';
+
+            // 生成新的二维码
+            qrInstance = new QRCode(document.getElementById('qrcode'), {
+                text: text,
+                width: size,
+                height: size,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        function downloadQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            if (!canvas) {
+                alert('请先生成二维码');
+                return;
+            }
+
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = 'qrcode_' + new Date().getTime() + '.png';
+            link.click();
+        }
+
+        function copyQRData() {
+            const text = document.getElementById('qrInput').value.trim();
+            if (!text) {
+                alert('请先输入内容');
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制：' + text);
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('已复制：' + text);
+            });
+        }
+
+        function quickGenerate(content) {
+            document.getElementById('qrInput').value = content;
+            generateQR();
+        }
+
+        // 页面加载完成后生成默认二维码
+        window.addEventListener('load', () => {
+            document.getElementById('qrInput').value = 'https://github.com/yisuoyanyv/web-tools';
+            generateQR();
+        });
+    </script>
+</body>
+</html>
