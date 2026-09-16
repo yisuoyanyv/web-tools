@@ -102,6 +102,10 @@ const tools = [
     }
 ];
 
+const FAVORITES_KEY = 'web-tools-favorites';
+let currentCategory = 'all';
+let currentQuery = '';
+
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
     initializeTools();
@@ -109,11 +113,80 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDonationPanel();
 });
 
+function getFavorites() {
+    try {
+        const raw = localStorage.getItem(FAVORITES_KEY);
+        const list = raw ? JSON.parse(raw) : [];
+        return Array.isArray(list) ? list.filter(id => typeof id === 'string') : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveFavorites(ids) {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(ids));
+}
+
+function isFavorite(toolId) {
+    return getFavorites().includes(toolId);
+}
+
+function toggleFavorite(toolId) {
+    const favorites = getFavorites();
+    const index = favorites.indexOf(toolId);
+    if (index >= 0) {
+        favorites.splice(index, 1);
+    } else {
+        favorites.unshift(toolId);
+    }
+    saveFavorites(favorites);
+    refreshToolsView();
+}
+
+function sortWithFavoritesFirst(list) {
+    const favorites = getFavorites();
+    const favRank = new Map(favorites.map((id, i) => [id, i]));
+
+    return [...list].sort((a, b) => {
+        const aFav = favRank.has(a.id);
+        const bFav = favRank.has(b.id);
+        if (aFav && bFav) return favRank.get(a.id) - favRank.get(b.id);
+        if (aFav) return -1;
+        if (bFav) return 1;
+        return 0;
+    });
+}
+
+function getFilteredTools() {
+    let list = tools;
+
+    if (currentCategory === 'favorites') {
+        const favorites = new Set(getFavorites());
+        list = tools.filter(tool => favorites.has(tool.id));
+    } else if (currentCategory !== 'all') {
+        list = tools.filter(tool => tool.category === currentCategory);
+    }
+
+    if (currentQuery) {
+        list = list.filter(tool =>
+            tool.name.toLowerCase().includes(currentQuery) ||
+            tool.description.toLowerCase().includes(currentQuery) ||
+            tool.category.toLowerCase().includes(currentQuery)
+        );
+    }
+
+    return sortWithFavoritesFirst(list);
+}
+
+function refreshToolsView() {
+    renderTools(getFilteredTools());
+}
+
 // 初始化工具网格
 function initializeTools() {
     const toolsGrid = document.getElementById('toolsGrid');
     if (toolsGrid) {
-        renderTools(tools);
+        refreshToolsView();
     }
 }
 
@@ -126,6 +199,10 @@ function renderTools(toolsToRender) {
 
     if (toolsToRender.length === 0) {
         emptyState.style.display = 'block';
+        emptyState.querySelector('p').textContent =
+            currentCategory === 'favorites' && !currentQuery
+                ? '还没有收藏，点击卡片右上角 ☆ 添加吧'
+                : '未找到匹配的工具 😕';
         return;
     }
 
@@ -140,13 +217,28 @@ function renderTools(toolsToRender) {
 // 创建工具卡片
 function createToolCard(tool) {
     const card = document.createElement('div');
-    card.className = `tool-card ${tool.category}`;
+    const favorited = isFavorite(tool.id);
+    card.className = `tool-card ${tool.category}${favorited ? ' is-favorite' : ''}`;
     card.innerHTML = `
+        <button
+            class="favorite-btn${favorited ? ' active' : ''}"
+            type="button"
+            title="${favorited ? '取消收藏' : '收藏'}"
+            aria-label="${favorited ? '取消收藏' : '收藏'}"
+            aria-pressed="${favorited}"
+        >${favorited ? '★' : '☆'}</button>
         <div class="tool-icon">${tool.icon}</div>
         <div class="tool-name">${tool.name}</div>
         <div class="tool-description">${tool.description}</div>
         <span class="tool-category">${getCategoryLabel(tool.category)}</span>
     `;
+
+    const favoriteBtn = card.querySelector('.favorite-btn');
+    favoriteBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleFavorite(tool.id);
+    });
 
     card.addEventListener('click', () => {
         navigateToTool(tool.url);
@@ -168,48 +260,37 @@ function getCategoryLabel(category) {
 
 // 导航到工具
 function navigateToTool(url) {
-    // 如果工具文件存在则导航，否则显示提示
     window.location.href = url;
 }
 
 // 设置事件监听
 function setupEventListeners() {
-    // 分类按钮（不含打赏菜单）
     const categoryBtns = document.querySelectorAll('.category-btn[data-category]');
     categoryBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             categoryBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
-            const category = btn.dataset.category;
-            if (category === 'all') {
-                renderTools(tools);
-            } else {
-                const filtered = tools.filter(tool => tool.category === category);
-                renderTools(filtered);
-            }
+            currentCategory = btn.dataset.category;
+            currentQuery = '';
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
+            refreshToolsView();
         });
     });
 
-    // 搜索功能
     const searchInput = document.getElementById('searchInput');
     const searchBtn = document.querySelector('.search-btn');
 
     if (searchInput && searchBtn) {
         function performSearch() {
-            const query = searchInput.value.toLowerCase().trim();
-            if (query === '') {
-                renderTools(tools);
-                return;
+            currentQuery = searchInput.value.toLowerCase().trim();
+            if (currentQuery) {
+                currentCategory = 'all';
+                categoryBtns.forEach(btn => btn.classList.remove('active'));
+                document.querySelector('[data-category="all"]').classList.add('active');
             }
-
-            const filtered = tools.filter(tool =>
-                tool.name.toLowerCase().includes(query) ||
-                tool.description.toLowerCase().includes(query) ||
-                tool.category.toLowerCase().includes(query)
-            );
-
-            renderTools(filtered);
+            refreshToolsView();
         }
 
         searchBtn.addEventListener('click', performSearch);
@@ -219,11 +300,8 @@ function setupEventListeners() {
             }
         });
 
-        // 搜索框聚焦时清空默认分类
         searchInput.addEventListener('focus', () => {
-            const categoryBtns = document.querySelectorAll('.category-btn[data-category]');
-            categoryBtns.forEach(btn => btn.classList.remove('active'));
-            document.querySelector('[data-category="all"]').classList.add('active');
+            // 保持当前视图；搜索时再切回「全部」
         });
     }
 }
@@ -238,7 +316,6 @@ function setupDonationPanel() {
         return;
     }
 
-    // 清理旧版「关闭后永久隐藏」的本地记录
     localStorage.removeItem('donation-panel-closed');
 
     function openDonation() {
