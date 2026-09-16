@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON 格式化 - Web Tools</title>
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-link">← 返回首页</a>
+
+        <div class="tool-content">
+            <h1>{ } JSON 格式化</h1>
+            <p>验证、格式化和压缩 JSON 数据</p>
+
+            <div style="margin-top: 30px;">
+                <label for="jsonInput">输入 JSON：</label>
+                <textarea id="jsonInput" rows="12" placeholder='{"name":"Web Tools","version":1}'></textarea>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                    <button onclick="formatJson()">格式化</button>
+                    <button onclick="minifyJson()">压缩</button>
+                    <button onclick="validateJson()">验证</button>
+                    <button onclick="copyResult()" style="background-color: #10b981;">复制结果</button>
+                    <button onclick="clearAll()" style="background-color: #6b7280;">清空</button>
+                </div>
+
+                <div id="statusBox" class="result-box" style="display: none; margin-top: 0;"></div>
+
+                <label for="jsonOutput">输出结果：</label>
+                <textarea id="jsonOutput" rows="12" readonly placeholder="格式化或压缩后的结果会显示在这里"></textarea>
+            </div>
+
+            <div style="margin-top: 30px; padding: 20px; background-color: #f0f4ff; border-radius: 8px;">
+                <h3>💡 使用说明</h3>
+                <ul style="line-height: 2;">
+                    <li><strong>格式化</strong>：美化缩进，便于阅读</li>
+                    <li><strong>压缩</strong>：去除空格与换行，减小体积</li>
+                    <li><strong>验证</strong>：检查是否为合法 JSON</li>
+                    <li>所有处理均在浏览器本地完成，不会上传数据</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showStatus(message, ok) {
+            const box = document.getElementById('statusBox');
+            box.style.display = 'block';
+            box.style.borderColor = ok ? '#10b981' : '#ef4444';
+            box.style.color = ok ? '#047857' : '#b91c1c';
+            box.textContent = message;
+        }
+
+        function parseInput() {
+            const text = document.getElementById('jsonInput').value.trim();
+            if (!text) {
+                throw new Error('请先输入 JSON 内容');
+            }
+            return JSON.parse(text);
+        }
+
+        function formatJson() {
+            try {
+                const obj = parseInput();
+                document.getElementById('jsonOutput').value = JSON.stringify(obj, null, 2);
+                showStatus('✅ JSON 格式化成功', true);
+            } catch (e) {
+                showStatus('❌ ' + e.message, false);
+            }
+        }
+
+        function minifyJson() {
+            try {
+                const obj = parseInput();
+                document.getElementById('jsonOutput').value = JSON.stringify(obj);
+                showStatus('✅ JSON 压缩成功', true);
+            } catch (e) {
+                showStatus('❌ ' + e.message, false);
+            }
+        }
+
+        function validateJson() {
+            try {
+                parseInput();
+                showStatus('✅ 合法的 JSON', true);
+            } catch (e) {
+                showStatus('❌ 非法 JSON：' + e.message, false);
+            }
+        }
+
+        function copyResult() {
+            const output = document.getElementById('jsonOutput').value;
+            if (!output) {
+                alert('没有可复制的内容');
+                return;
+            }
+            navigator.clipboard.writeText(output).then(() => {
+                showStatus('✅ 已复制到剪贴板', true);
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = output;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showStatus('✅ 已复制到剪贴板', true);
+            });
+        }
+
+        function clearAll() {
+            document.getElementById('jsonInput').value = '';
+            document.getElementById('jsonOutput').value = '';
+            document.getElementById('statusBox').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

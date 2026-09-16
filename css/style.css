@@ -211,12 +211,36 @@ body {
     font-size: 1.1rem;
 }
 
-/* 打赏区域 */
-.donation-panel {
+/* 打赏菜单按钮 */
+.donation-menu-btn {
+    background: linear-gradient(135deg, #f472b6, #ec4899);
+    color: white;
+    border-color: transparent;
+}
+
+.donation-menu-btn:hover,
+.donation-menu-btn.active {
+    background: linear-gradient(135deg, #ec4899, #db2777);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+}
+
+/* 打赏弹层 */
+.donation-overlay {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 100;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: rgba(17, 24, 39, 0.45);
+    backdrop-filter: blur(2px);
+}
+
+.donation-overlay.hidden {
+    display: none;
 }
 
 .donation-card {
@@ -226,13 +250,10 @@ body {
     box-shadow: var(--shadow-md);
     border-left: 4px solid var(--secondary-color);
     max-width: 280px;
-    animation: slideInRight 0.5s ease;
+    width: 100%;
+    animation: slideInRight 0.35s ease;
     position: relative;
     transition: all 0.3s ease;
-}
-
-.donation-card.hidden {
-    display: none;
 }
 
 .donation-close-btn {
@@ -298,6 +319,15 @@ body {
 .qr-text {
     font-size: 0.8rem !important;
     font-style: italic;
+}
+
+.qr-code-image {
+    width: 180px;
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+    box-shadow: var(--shadow-sm);
 }
 
 .donation-tips {
@@ -440,11 +470,8 @@ body {
         gap: 16px;
     }
 
-    .donation-panel {
-        bottom: 20px;
-        right: 20px;
-        left: 20px;
-        max-width: none;
+    .donation-menu-btn {
+        width: auto;
     }
 
     .donation-card {

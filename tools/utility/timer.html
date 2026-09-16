@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>计时器 - Web Tools</title>
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-link">← 返回首页</a>
+
+        <div class="tool-content">
+            <h1>⏱️ 计时器</h1>
+            <p>秒表与倒计时，支持计圈记录</p>
+
+            <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button id="modeStopwatch" onclick="setMode('stopwatch')">秒表模式</button>
+                <button id="modeCountdown" onclick="setMode('countdown')" style="background-color: #6b7280;">倒计时模式</button>
+            </div>
+
+            <div style="margin-top: 30px; text-align: center;">
+                <div id="display" style="font-size: 3.5rem; font-weight: 700; letter-spacing: 2px; font-variant-numeric: tabular-nums; color: #6366f1;">
+                    00:00:00.00
+                </div>
+
+                <div id="countdownSetup" style="display: none; max-width: 480px; margin: 20px auto 0; text-align: left;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                        <div>
+                            <label for="hours">时</label>
+                            <input type="number" id="hours" min="0" max="99" value="0">
+                        </div>
+                        <div>
+                            <label for="minutes">分</label>
+                            <input type="number" id="minutes" min="0" max="59" value="5">
+                        </div>
+                        <div>
+                            <label for="seconds">秒</label>
+                            <input type="number" id="seconds" min="0" max="59" value="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 24px;">
+                    <button id="startBtn" onclick="startTimer()">开始</button>
+                    <button id="pauseBtn" onclick="pauseTimer()" style="background-color: #f59e0b;">暂停</button>
+                    <button id="lapBtn" onclick="addLap()" style="background-color: #10b981;">计圈</button>
+                    <button id="resetBtn" onclick="resetTimer()" style="background-color: #6b7280;">重置</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <h2>计圈记录</h2>
+                <div class="result-box" id="lapsBox">
+                    <p style="margin: 0; color: #6b7280;">暂无记录</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; padding: 20px; background-color: #f0f4ff; border-radius: 8px;">
+                <h3>💡 使用说明</h3>
+                <ul style="line-height: 2;">
+                    <li>秒表：正计时，可随时计圈</li>
+                    <li>倒计时：设置时长后开始，归零时提示</li>
+                    <li>切换模式会自动重置当前计时</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mode = 'stopwatch';
+        let running = false;
+        let startTs = 0;
+        let elapsed = 0;
+        let countdownTotal = 0;
+        let rafId = null;
+        let laps = [];
+
+        function setMode(next) {
+            if (mode === next) return;
+            mode = next;
+            resetTimer();
+
+            document.getElementById('modeStopwatch').style.backgroundColor = next === 'stopwatch' ? '' : '#6b7280';
+            document.getElementById('modeCountdown').style.backgroundColor = next === 'countdown' ? '' : '#6b7280';
+            document.getElementById('countdownSetup').style.display = next === 'countdown' ? 'block' : 'none';
+            document.getElementById('lapBtn').style.display = next === 'stopwatch' ? '' : 'none';
+        }
+
+        function formatTime(ms) {
+            const totalCs = Math.max(0, Math.floor(ms / 10));
+            const cs = totalCs % 100;
+            const totalSec = Math.floor(totalCs / 100);
+            const s = totalSec % 60;
+            const totalMin = Math.floor(totalSec / 60);
+            const m = totalMin % 60;
+            const h = Math.floor(totalMin / 60);
+            const pad = (n, len = 2) => String(n).padStart(len, '0');
+            return `${pad(h)}:${pad(m)}:${pad(s)}.${pad(cs)}`;
+        }
+
+        function render() {
+            let shown;
+            if (mode === 'stopwatch') {
+                shown = elapsed + (running ? performance.now() - startTs : 0);
+            } else {
+                const remain = countdownTotal - (elapsed + (running ? performance.now() - startTs : 0));
+                shown = Math.max(0, remain);
+                if (running && remain <= 0) {
+                    pauseTimer();
+                    document.getElementById('display').textContent = formatTime(0);
+                    alert('倒计时结束！');
+                    return;
+                }
+            }
+            document.getElementById('display').textContent = formatTime(shown);
+            if (running) {
+                rafId = requestAnimationFrame(render);
+            }
+        }
+
+        function startTimer() {
+            if (running) return;
+
+            if (mode === 'countdown' && countdownTotal === 0 && elapsed === 0) {
+                const h = parseInt(document.getElementById('hours').value, 10) || 0;
+                const m = parseInt(document.getElementById('minutes').value, 10) || 0;
+                const s = parseInt(document.getElementById('seconds').value, 10) || 0;
+                countdownTotal = ((h * 3600) + (m * 60) + s) * 1000;
+                if (countdownTotal <= 0) {
+                    alert('请设置大于 0 的倒计时时长');
+                    return;
+                }
+            }
+
+            running = true;
+            startTs = performance.now();
+            rafId = requestAnimationFrame(render);
+        }
+
+        function pauseTimer() {
+            if (!running) return;
+            elapsed += performance.now() - startTs;
+            running = false;
+            if (rafId) cancelAnimationFrame(rafId);
+            render();
+        }
+
+        function resetTimer() {
+            running = false;
+            if (rafId) cancelAnimationFrame(rafId);
+            startTs = 0;
+            elapsed = 0;
+            countdownTotal = 0;
+            laps = [];
+            document.getElementById('lapsBox').innerHTML = '<p style="margin: 0; color: #6b7280;">暂无记录</p>';
+            document.getElementById('display').textContent = formatTime(
+                mode === 'countdown'
+                    ? ((parseInt(document.getElementById('hours').value, 10) || 0) * 3600 +
+                       (parseInt(document.getElementById('minutes').value, 10) || 0) * 60 +
+                       (parseInt(document.getElementById('seconds').value, 10) || 0)) * 1000
+                    : 0
+            );
+        }
+
+        function addLap() {
+            if (mode !== 'stopwatch') return;
+            const current = elapsed + (running ? performance.now() - startTs : 0);
+            if (current <= 0) return;
+            laps.push(current);
+            const html = laps.map((t, i) =>
+                `<p style="margin: 6px 0;"><strong>#${i + 1}</strong> ${formatTime(t)}</p>`
+            ).join('');
+            document.getElementById('lapsBox').innerHTML = html;
+        }
+
+        ['hours', 'minutes', 'seconds'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                if (!running && mode === 'countdown' && elapsed === 0) {
+                    resetTimer();
+                }
+            });
+        });
+
+        setMode('stopwatch');
+        document.getElementById('lapBtn').style.display = '';
+        document.getElementById('modeStopwatch').style.backgroundColor = '';
+        document.getElementById('modeCountdown').style.backgroundColor = '#6b7280';
+        document.getElementById('display').textContent = formatTime(0);
+    </script>
+</body>
+</html>

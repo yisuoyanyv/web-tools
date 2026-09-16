@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>进制转换 - Web Tools</title>
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-link">← 返回首页</a>
+
+        <div class="tool-content">
+            <h1>🔢 进制转换</h1>
+            <p>支持二进制、八进制、十进制、十六进制的相互转换</p>
+
+            <div style="margin-top: 30px; max-width: 700px;">
+                <label for="inputValue">输入数值：</label>
+                <input type="text" id="inputValue" placeholder="输入要转换的数值">
+
+                <label for="fromBase">输入进制：</label>
+                <select id="fromBase">
+                    <option value="2">二进制 (BIN)</option>
+                    <option value="8">八进制 (OCT)</option>
+                    <option value="10" selected>十进制 (DEC)</option>
+                    <option value="16">十六进制 (HEX)</option>
+                </select>
+
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="convert()" style="flex: 1;">转换</button>
+                    <button onclick="clearAll()" style="flex: 1; background-color: #6b7280;">清空</button>
+                </div>
+
+                <div class="result-box">
+                    <p><strong>二进制：</strong> <span id="binResult">-</span></p>
+                    <p><strong>八进制：</strong> <span id="octResult">-</span></p>
+                    <p><strong>十进制：</strong> <span id="decResult">-</span></p>
+                    <p><strong>十六进制：</strong> <span id="hexResult">-</span></p>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <h2>使用说明</h2>
+                <ul style="line-height: 2;">
+                    <li>选择输入数值的进制类型</li>
+                    <li>输入对应进制的数值（十六进制支持 A-F）</li>
+                    <li>点击「转换」查看四种进制结果</li>
+                    <li>支持较大整数（基于 BigInt）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function convert() {
+            const raw = document.getElementById('inputValue').value.trim();
+            const fromBase = parseInt(document.getElementById('fromBase').value, 10);
+
+            if (!raw) {
+                alert('请输入要转换的数值');
+                return;
+            }
+
+            try {
+                const cleaned = fromBase === 16 ? raw.replace(/^0x/i, '') : raw.replace(/\s+/g, '');
+                const value = parseIntSafe(cleaned, fromBase);
+
+                document.getElementById('binResult').textContent = value.toString(2);
+                document.getElementById('octResult').textContent = value.toString(8);
+                document.getElementById('decResult').textContent = value.toString(10);
+                document.getElementById('hexResult').textContent = value.toString(16).toUpperCase();
+            } catch (e) {
+                alert('输入无效，请检查数值与进制是否匹配');
+            }
+        }
+
+        function parseIntSafe(str, base) {
+            if (!/^[0-9a-fA-F]+$/.test(str) && base === 16) {
+                throw new Error('invalid hex');
+            }
+            if (base === 2 && !/^[01]+$/.test(str)) throw new Error('invalid bin');
+            if (base === 8 && !/^[0-7]+$/.test(str)) throw new Error('invalid oct');
+            if (base === 10 && !/^-?\d+$/.test(str)) throw new Error('invalid dec');
+
+            // BigInt 构造：十进制直接用；其他进制用 0b/0o/0x 前缀
+            if (base === 10) return BigInt(str);
+            if (base === 2) return BigInt('0b' + str);
+            if (base === 8) return BigInt('0o' + str);
+            return BigInt('0x' + str);
+        }
+
+        function clearAll() {
+            document.getElementById('inputValue').value = '';
+            document.getElementById('binResult').textContent = '-';
+            document.getElementById('octResult').textContent = '-';
+            document.getElementById('decResult').textContent = '-';
+            document.getElementById('hexResult').textContent = '-';
+        }
+
+        document.getElementById('inputValue').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') convert();
+        });
+    </script>
+</body>
+</html>

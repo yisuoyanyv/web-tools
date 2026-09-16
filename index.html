@@ -29,6 +29,7 @@
             <button class="category-btn" data-category="generator">生成工具</button>
             <button class="category-btn" data-category="calculator">计算工具</button>
             <button class="category-btn" data-category="utility">实用工具</button>
+            <button class="category-btn donation-menu-btn" id="donationMenuBtn" type="button">💝 打赏支持</button>
         </nav>
 
         <!-- 工具网格 -->
@@ -42,21 +43,23 @@
         </div>
     </div>
 
-    <!-- 打赏区域 -->
-    <aside class="donation-panel">
-        <div class="donation-card" id="donationCard">
-            <button class="donation-close-btn" id="donationCloseBtn" title="关闭">✕</button>
-            <h3>💝 支持我们</h3>
+    <!-- 打赏弹层：默认关闭，由「打赏支持」菜单打开 -->
+    <div class="donation-overlay hidden" id="donationOverlay" aria-hidden="true">
+        <div class="donation-card" id="donationCard" role="dialog" aria-modal="true" aria-labelledby="donationTitle">
+            <button class="donation-close-btn" id="donationCloseBtn" title="关闭" type="button">✕</button>
+            <h3 id="donationTitle">💝 支持我们</h3>
             <p>如果这些工具对您有帮助，欢迎打赏支持</p>
             <div class="qr-code-container">
-                <div class="qr-code-placeholder">
-                    <p>📱 打赏二维码</p>
-                    <p class="qr-text">(二维码占位)</p>
-                </div>
+                <img
+                    class="qr-code-image"
+                    src="assets/wechat-pay-qrcode.jpg"
+                    alt="微信支付打赏二维码"
+                    title="微信扫码打赏"
+                >
             </div>
-            <p class="donation-tips">扫码打赏或转账，谢谢您的支持！</p>
+            <p class="donation-tips">微信扫码打赏，谢谢您的支持！</p>
         </div>
-    </aside>
+    </div>
 
     <!-- 页脚 -->
     <footer class="footer">

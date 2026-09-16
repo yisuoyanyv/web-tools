@@ -174,8 +174,8 @@ function navigateToTool(url) {
 
 // 设置事件监听
 function setupEventListeners() {
-    // 分类按钮
-    const categoryBtns = document.querySelectorAll('.category-btn');
+    // 分类按钮（不含打赏菜单）
+    const categoryBtns = document.querySelectorAll('.category-btn[data-category]');
     categoryBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             categoryBtns.forEach(b => b.classList.remove('active'));
@@ -221,28 +221,53 @@ function setupEventListeners() {
 
         // 搜索框聚焦时清空默认分类
         searchInput.addEventListener('focus', () => {
-            const categoryBtns = document.querySelectorAll('.category-btn');
+            const categoryBtns = document.querySelectorAll('.category-btn[data-category]');
             categoryBtns.forEach(btn => btn.classList.remove('active'));
             document.querySelector('[data-category="all"]').classList.add('active');
         });
     }
 }
 
-// 设置打赏面板
+// 设置打赏菜单 / 弹层（不持久化关闭状态，刷新后仍可通过菜单打开）
 function setupDonationPanel() {
-    const donationCloseBtn = document.getElementById('donationCloseBtn');
-    const donationCard = document.getElementById('donationCard');
+    const overlay = document.getElementById('donationOverlay');
+    const menuBtn = document.getElementById('donationMenuBtn');
+    const closeBtn = document.getElementById('donationCloseBtn');
 
-    if (donationCloseBtn && donationCard) {
-        donationCloseBtn.addEventListener('click', () => {
-            donationCard.classList.add('hidden');
-            // 保存用户的关闭偏好到本地存储
-            localStorage.setItem('donation-panel-closed', 'true');
-        });
-
-        // 检查用户是否之前关闭过面板
-        if (localStorage.getItem('donation-panel-closed') === 'true') {
-            donationCard.classList.add('hidden');
-        }
+    if (!overlay || !menuBtn || !closeBtn) {
+        return;
     }
+
+    // 清理旧版「关闭后永久隐藏」的本地记录
+    localStorage.removeItem('donation-panel-closed');
+
+    function openDonation() {
+        overlay.classList.remove('hidden');
+        overlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeDonation() {
+        overlay.classList.add('hidden');
+        overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    menuBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openDonation();
+    });
+
+    closeBtn.addEventListener('click', closeDonation);
+
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            closeDonation();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !overlay.classList.contains('hidden')) {
+            closeDonation();
+        }
+    });
 }

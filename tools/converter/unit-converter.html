@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单位转换 - Web Tools</title>
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-link">← 返回首页</a>
+
+        <div class="tool-content">
+            <h1>📏 单位转换</h1>
+            <p>长度、重量、温度、面积、体积等常用单位转换</p>
+
+            <div style="margin-top: 30px; max-width: 700px;">
+                <label for="category">转换类型：</label>
+                <select id="category" onchange="updateUnits()">
+                    <option value="length">长度</option>
+                    <option value="weight">重量</option>
+                    <option value="temperature">温度</option>
+                    <option value="area">面积</option>
+                    <option value="volume">体积</option>
+                </select>
+
+                <label for="inputValue">数值：</label>
+                <input type="number" id="inputValue" placeholder="输入数值" step="any">
+
+                <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: end;">
+                    <div>
+                        <label for="fromUnit">从：</label>
+                        <select id="fromUnit"></select>
+                    </div>
+                    <button type="button" onclick="swapUnits()" style="margin-bottom: 15px; padding: 12px 16px;">⇄</button>
+                    <div>
+                        <label for="toUnit">到：</label>
+                        <select id="toUnit"></select>
+                    </div>
+                </div>
+
+                <button onclick="convert()" style="width: 100%;">转换</button>
+
+                <div class="result-box">
+                    <p style="font-size: 1.3rem;"><strong>结果：</strong> <span id="result">-</span></p>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px; padding: 20px; background-color: #f0f4ff; border-radius: 8px;">
+                <h3>💡 提示</h3>
+                <ul style="line-height: 2;">
+                    <li>温度转换支持摄氏度、华氏度、开尔文</li>
+                    <li>其他类型按基准单位换算，结果保留合理精度</li>
+                    <li>点击 ⇄ 可快速互换单位</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const UNITS = {
+            length: {
+                m: { name: '米 (m)', factor: 1 },
+                km: { name: '千米 (km)', factor: 1000 },
+                cm: { name: '厘米 (cm)', factor: 0.01 },
+                mm: { name: '毫米 (mm)', factor: 0.001 },
+                mi: { name: '英里 (mi)', factor: 1609.344 },
+                yd: { name: '码 (yd)', factor: 0.9144 },
+                ft: { name: '英尺 (ft)', factor: 0.3048 },
+                in: { name: '英寸 (in)', factor: 0.0254 }
+            },
+            weight: {
+                kg: { name: '千克 (kg)', factor: 1 },
+                g: { name: '克 (g)', factor: 0.001 },
+                mg: { name: '毫克 (mg)', factor: 0.000001 },
+                t: { name: '吨 (t)', factor: 1000 },
+                lb: { name: '磅 (lb)', factor: 0.45359237 },
+                oz: { name: '盎司 (oz)', factor: 0.028349523125 }
+            },
+            temperature: {
+                C: { name: '摄氏度 (°C)' },
+                F: { name: '华氏度 (°F)' },
+                K: { name: '开尔文 (K)' }
+            },
+            area: {
+                m2: { name: '平方米 (m²)', factor: 1 },
+                km2: { name: '平方千米 (km²)', factor: 1e6 },
+                cm2: { name: '平方厘米 (cm²)', factor: 0.0001 },
+                ha: { name: '公顷 (ha)', factor: 10000 },
+                acre: { name: '英亩 (acre)', factor: 4046.8564224 },
+                ft2: { name: '平方英尺 (ft²)', factor: 0.09290304 }
+            },
+            volume: {
+                L: { name: '升 (L)', factor: 1 },
+                mL: { name: '毫升 (mL)', factor: 0.001 },
+                m3: { name: '立方米 (m³)', factor: 1000 },
+                gal: { name: '美制加仑 (gal)', factor: 3.785411784 },
+                qt: { name: '夸脱 (qt)', factor: 0.946352946 },
+                cup: { name: '杯 (cup)', factor: 0.2365882365 }
+            }
+        };
+
+        function updateUnits() {
+            const category = document.getElementById('category').value;
+            const fromUnit = document.getElementById('fromUnit');
+            const toUnit = document.getElementById('toUnit');
+            const keys = Object.keys(UNITS[category]);
+
+            fromUnit.innerHTML = keys.map(k => `<option value="${k}">${UNITS[category][k].name}</option>`).join('');
+            toUnit.innerHTML = keys.map(k => `<option value="${k}">${UNITS[category][k].name}</option>`).join('');
+
+            if (keys.length > 1) {
+                toUnit.value = keys[1];
+            }
+        }
+
+        function swapUnits() {
+            const fromUnit = document.getElementById('fromUnit');
+            const toUnit = document.getElementById('toUnit');
+            const temp = fromUnit.value;
+            fromUnit.value = toUnit.value;
+            toUnit.value = temp;
+            convert();
+        }
+
+        function convertTemperature(value, from, to) {
+            let celsius;
+            if (from === 'C') celsius = value;
+            else if (from === 'F') celsius = (value - 32) * 5 / 9;
+            else celsius = value - 273.15;
+
+            if (to === 'C') return celsius;
+            if (to === 'F') return celsius * 9 / 5 + 32;
+            return celsius + 273.15;
+        }
+
+        function convert() {
+            const category = document.getElementById('category').value;
+            const value = parseFloat(document.getElementById('inputValue').value);
+            const from = document.getElementById('fromUnit').value;
+            const to = document.getElementById('toUnit').value;
+
+            if (isNaN(value)) {
+                alert('请输入有效数值');
+                return;
+            }
+
+            let result;
+            if (category === 'temperature') {
+                result = convertTemperature(value, from, to);
+            } else {
+                const base = value * UNITS[category][from].factor;
+                result = base / UNITS[category][to].factor;
+            }
+
+            const formatted = Number.isInteger(result) ? result.toString() : Number(result.toPrecision(10)).toString();
+            document.getElementById('result').textContent =
+                `${value} ${UNITS[category][from].name} = ${formatted} ${UNITS[category][to].name}`;
+        }
+
+        document.getElementById('inputValue').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') convert();
+        });
+
+        updateUnits();
+    </script>
+</body>
+</html>

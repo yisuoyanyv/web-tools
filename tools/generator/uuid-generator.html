@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UUID 生成器 - Web Tools</title>
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-link">← 返回首页</a>
+
+        <div class="tool-content">
+            <h1>🆔 UUID 生成器</h1>
+            <p>快速生成 UUID v4 标识符，支持批量生成</p>
+
+            <div style="margin-top: 30px; max-width: 700px;">
+                <label for="count">生成数量（1-100）：</label>
+                <input type="number" id="count" min="1" max="100" value="1">
+
+                <label>
+                    <input type="checkbox" id="uppercase"> 大写输出
+                </label>
+                <br>
+                <label>
+                    <input type="checkbox" id="noHyphen"> 去除连字符
+                </label>
+
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button onclick="generate()" style="flex: 1;">生成 UUID</button>
+                    <button onclick="copyAll()" style="flex: 1; background-color: #10b981;">复制全部</button>
+                </div>
+
+                <div class="result-box">
+                    <pre id="result" style="margin: 0; white-space: pre-wrap; word-break: break-all; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">点击生成获得 UUID</pre>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <h2>使用说明</h2>
+                <ul style="line-height: 2;">
+                    <li>默认生成符合 RFC 4122 的 UUID v4</li>
+                    <li>可一次生成最多 100 个</li>
+                    <li>可选择大写或去除连字符格式</li>
+                    <li>使用浏览器加密随机数（crypto.getRandomValues）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function createUuidV4() {
+            if (window.crypto && crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+
+            const bytes = new Uint8Array(16);
+            crypto.getRandomValues(bytes);
+            bytes[6] = (bytes[6] & 0x0f) | 0x40;
+            bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+            const hex = [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
+            return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+        }
+
+        function generate() {
+            let count = parseInt(document.getElementById('count').value, 10);
+            if (isNaN(count) || count < 1) count = 1;
+            if (count > 100) count = 100;
+            document.getElementById('count').value = count;
+
+            const uppercase = document.getElementById('uppercase').checked;
+            const noHyphen = document.getElementById('noHyphen').checked;
+
+            const list = [];
+            for (let i = 0; i < count; i++) {
+                let id = createUuidV4();
+                if (noHyphen) id = id.replace(/-/g, '');
+                if (uppercase) id = id.toUpperCase();
+                list.push(id);
+            }
+
+            document.getElementById('result').textContent = list.join('\n');
+        }
+
+        function copyAll() {
+            const text = document.getElementById('result').textContent;
+            if (!text || text === '点击生成获得 UUID') {
+                alert('请先生成 UUID');
+                return;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制到剪贴板');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('已复制到剪贴板');
+            });
+        }
+
+        window.addEventListener('load', generate);
+    </script>
+</body>
+</html>
