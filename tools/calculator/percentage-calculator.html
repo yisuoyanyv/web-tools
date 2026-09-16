@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>百分比计算 - Web Tools</title>
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-link">← 返回首页</a>
+
+        <div class="tool-content">
+            <h1>📊 百分比计算</h1>
+            <p>计算百分比、折扣、增长率等</p>
+
+            <div style="margin-top: 30px;">
+                <h2>选择计算类型</h2>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 30px;">
+                    <button class="category-btn active" data-mode="percentage" onclick="switchMode('percentage')">百分比</button>
+                    <button class="category-btn" data-mode="discount" onclick="switchMode('discount')">折扣</button>
+                    <button class="category-btn" data-mode="growth" onclick="switchMode('growth')">增长率</button>
+                    <button class="category-btn" data-mode="ratio" onclick="switchMode('ratio')">占比</button>
+                </div>
+            </div>
+
+            <!-- 百分比模式 -->
+            <div id="percentage-mode" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h2>计算：A 的 B% 是多少？</h2>
+                    <label for="percent-a">数值 A：</label>
+                    <input type="number" id="percent-a" placeholder="100" step="any">
+                    
+                    <label for="percent-b">百分比 B：</label>
+                    <input type="number" id="percent-b" placeholder="20" step="any">
+                    
+                    <button onclick="calculatePercentage()">计算</button>
+                </div>
+
+                <div>
+                    <h2>结果</h2>
+                    <div class="result-box">
+                        <p><strong>结果：</strong> <span id="percentage-result" style="font-size: 1.5rem; color: #6366f1;">-</span></p>
+                        <p style="margin-top: 20px; font-size: 0.9rem; color: #6b7280;">
+                            <span id="percent-calc-show"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 折扣模式 -->
+            <div id="discount-mode" style="display: none; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h2>计算：打折后的价格</h2>
+                    <label for="discount-price">原价：</label>
+                    <input type="number" id="discount-price" placeholder="100" step="any">
+                    
+                    <label for="discount-percent">折扣：</label>
+                    <input type="number" id="discount-percent" placeholder="20" step="any">
+                    <small>（输入折扣百分比，例如 20 表示打 8 折）</small>
+                    
+                    <button onclick="calculateDiscount()">计算</button>
+                </div>
+
+                <div>
+                    <h2>结果</h2>
+                    <div class="result-box">
+                        <p><strong>原价：</strong> <span id="discount-original">-</span></p>
+                        <p><strong>优惠额：</strong> <span id="discount-save">-</span></p>
+                        <p><strong>现价：</strong> <span id="discount-result" style="font-size: 1.5rem; color: #10b981;">-</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 增长率模式 -->
+            <div id="growth-mode" style="display: none; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h2>计算：增长率</h2>
+                    <label for="growth-initial">初始值：</label>
+                    <input type="number" id="growth-initial" placeholder="100" step="any">
+                    
+                    <label for="growth-final">最终值：</label>
+                    <input type="number" id="growth-final" placeholder="150" step="any">
+                    
+                    <button onclick="calculateGrowth()">计算</button>
+                </div>
+
+                <div>
+                    <h2>结果</h2>
+                    <div class="result-box">
+                        <p><strong>增长量：</strong> <span id="growth-change">-</span></p>
+                        <p><strong>增长率：</strong> <span id="growth-rate" style="font-size: 1.5rem; color: #6366f1;">-</span></p>
+                        <p style="margin-top: 20px; font-size: 0.9rem; color: #6b7280;">
+                            <span id="growth-calc-show"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 占比模式 -->
+            <div id="ratio-mode" style="display: none; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h2>计算：占比</h2>
+                    <label for="ratio-part">部分数值：</label>
+                    <input type="number" id="ratio-part" placeholder="30" step="any">
+                    
+                    <label for="ratio-total">总数值：</label>
+                    <input type="number" id="ratio-total" placeholder="100" step="any">
+                    
+                    <button onclick="calculateRatio()">计算</button>
+                </div>
+
+                <div>
+                    <h2>结果</h2>
+                    <div class="result-box">
+                        <p><strong>占比：</strong> <span id="ratio-result" style="font-size: 1.5rem; color: #f59e0b;">-</span></p>
+                        <p style="margin-top: 20px; font-size: 0.9rem; color: #6b7280;">
+                            <span id="ratio-calc-show"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <h2>使用说明</h2>
+                <ul style="line-height: 2;">
+                    <li><strong>百分比</strong>：计算数值的百分之几是多少</li>
+                    <li><strong>折扣</strong>：计算打折后的价格，如打 8 折输入 20</li>
+                    <li><strong>增长率</strong>：计算初始值到最终值的增长百分比</li>
+                    <li><strong>占比</strong>：计算部分数值占总数值的百分比</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'percentage';
+
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // 隐藏所有模式
+            document.getElementById('percentage-mode').style.display = 'none';
+            document.getElementById('discount-mode').style.display = 'none';
+            document.getElementById('growth-mode').style.display = 'none';
+            document.getElementById('ratio-mode').style.display = 'none';
+
+            // 显示当前模式
+            document.getElementById(mode + '-mode').style.display = 'grid';
+
+            // 更新按钮状态
+            document.querySelectorAll('[data-mode]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+        }
+
+        function calculatePercentage() {
+            const a = parseFloat(document.getElementById('percent-a').value);
+            const b = parseFloat(document.getElementById('percent-b').value);
+
+            if (!a || !b || isNaN(a) || isNaN(b)) {
+                alert('请输入有效的数值');
+                return;
+            }
+
+            const result = (a * b / 100).toFixed(2);
+            document.getElementById('percentage-result').textContent = result;
+            document.getElementById('percent-calc-show').textContent = `${a} × ${b}% = ${result}`;
+        }
+
+        function calculateDiscount() {
+            const price = parseFloat(document.getElementById('discount-price').value);
+            const discount = parseFloat(document.getElementById('discount-percent').value);
+
+            if (!price || !discount || isNaN(price) || isNaN(discount)) {
+                alert('请输入有效的数值');
+                return;
+            }
+
+            const save = (price * discount / 100).toFixed(2);
+            const finalPrice = (price - save).toFixed(2);
+            const discountRate = (100 - discount).toFixed(0);
+
+            document.getElementById('discount-original').textContent = '¥' + price.toFixed(2);
+            document.getElementById('discount-save').textContent = '¥' + save;
+            document.getElementById('discount-result').textContent = '¥' + finalPrice;
+        }
+
+        function calculateGrowth() {
+            const initial = parseFloat(document.getElementById('growth-initial').value);
+            const final = parseFloat(document.getElementById('growth-final').value);
+
+            if (!initial || !final || isNaN(initial) || isNaN(final)) {
+                alert('请输入有效的数值');
+                return;
+            }
+
+            const change = (final - initial).toFixed(2);
+            const rate = ((final - initial) / initial * 100).toFixed(2);
+
+            document.getElementById('growth-change').textContent = change;
+            document.getElementById('growth-rate').textContent = rate + '%';
+            document.getElementById('growth-calc-show').textContent = `(${final} - ${initial}) / ${initial} × 100% = ${rate}%`;
+        }
+
+        function calculateRatio() {
+            const part = parseFloat(document.getElementById('ratio-part').value);
+            const total = parseFloat(document.getElementById('ratio-total').value);
+
+            if (!part || !total || isNaN(part) || isNaN(total) || total === 0) {
+                alert('请输入有效的数值');
+                return;
+            }
+
+            const ratio = (part / total * 100).toFixed(2);
+
+            document.getElementById('ratio-result').textContent = ratio + '%';
+            document.getElementById('ratio-calc-show').textContent = `${part} / ${total} × 100% = ${ratio}%`;
+        }
+
+        // 回车键快捷计算
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (currentMode === 'percentage') calculatePercentage();
+                else if (currentMode === 'discount') calculateDiscount();
+                else if (currentMode === 'growth') calculateGrowth();
+                else if (currentMode === 'ratio') calculateRatio();
+            }
+        });
+    </script>
+</body>
+</html>
