@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN\">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI 计算器 - Web Tools</title>
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-link">← 返回首页</a>
+
+        <div class="tool-content">
+            <h1>⚖️ BMI 计算器</h1>
+            <p>计算身体质量指数，评估健康状况</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
+                <!-- 输入区 -->
+                <div>
+                    <h2>输入数据</h2>
+
+                    <label for="height">身高 (cm)：</label>
+                    <input type="number" id="height" placeholder="输入身高，例如 175" min="50" max="300" step="0.1">
+
+                    <label for="weight">体重 (kg)：</label>
+                    <input type="number" id="weight" placeholder="输入体重，例如 70" min="20" max="500" step="0.1">
+
+                    <button onclick="calculateBMI()">计算 BMI</button>
+                </div>
+
+                <!-- 结果区 -->
+                <div>
+                    <h2>计算结果</h2>
+                    <div class="result-box">
+                        <p><strong>BMI 值：</strong> <span id="bmiValue" style="font-size: 1.5rem; color: #6366f1;">-</span></p>
+                        <p><strong>身体状况：</strong> <span id="bmiStatus">-</span></p>
+                        <p><strong>理想体重范围：</strong> <span id="idealWeight">-</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <h2>BMI 分类标准</h2>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                    <tr style="background-color: #f0f4ff;">
+                        <th style="border: 1px solid #e5e7eb; padding: 10px;">BMI 范围</th>
+                        <th style="border: 1px solid #e5e7eb; padding: 10px;">分类</th>
+                        <th style="border: 1px solid #e5e7eb; padding: 10px;">状态</th>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #e5e7eb; padding: 10px;">BMI < 18.5</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 10px;">偏瘦</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 10px;">⚠️</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #e5e7eb; padding: 10px;">18.5 ≤ BMI < 24</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 10px;">正常</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 10px;">✅</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #e5e7eb; padding: 10px;">24 ≤ BMI < 28</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 10px;">超重</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 10px;">⚠️</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #e5e7eb; padding: 10px;">BMI ≥ 28</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 10px;">肥胖</td>
+                        <td style="border: 1px solid #e5e7eb; padding: 10px;">❌</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="margin-top: 30px; padding: 20px; background-color: #f0f4ff; border-radius: 8px;">
+                <h3>💡 BMI 说明</h3>
+                <ul style="line-height: 2;">
+                    <li><strong>BMI 公式：</strong> BMI = 体重(kg) ÷ 身高(m)²</li>
+                    <li>BMI 是评估体重是否健康的指标</li>
+                    <li>理想 BMI 范围：18.5 - 24</li>
+                    <li>请咨询医生获得专业的健康建议</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculateBMI() {
+            const height = parseFloat(document.getElementById('height').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+
+            if (!height || !weight || height <= 0 || weight <= 0) {
+                alert('请输入有效的身高和体重');
+                return;
+            }
+
+            // 转换身高为米
+            const heightInMeters = height / 100;
+
+            // 计算 BMI
+            const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
+
+            // 判断状态
+            let status = '';
+            let statusColor = '';
+            if (bmi < 18.5) {
+                status = '偏瘦';
+                statusColor = 'orange';
+            } else if (bmi < 24) {
+                status = '正常';
+                statusColor = 'green';
+            } else if (bmi < 28) {
+                status = '超重';
+                statusColor = 'orange';
+            } else {
+                status = '肥胖';
+                statusColor = 'red';
+            }
+
+            // 计算理想体重
+            const minWeight = (18.5 * heightInMeters * heightInMeters).toFixed(1);
+            const maxWeight = (24 * heightInMeters * heightInMeters).toFixed(1);
+
+            // 显示结果
+            document.getElementById('bmiValue').textContent = bmi;
+            document.getElementById('bmiValue').style.color = statusColor;
+            document.getElementById('bmiStatus').textContent = status;
+            document.getElementById('idealWeight').textContent = minWeight + ' - ' + maxWeight + ' kg';
+        }
+
+        // 回车键快捷计算
+        document.getElementById('weight').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                calculateBMI();
+            }
+        });
+    </script>
+</body>
+</html>
