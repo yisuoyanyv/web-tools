@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>房贷计算器 - Web Tools</title>
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-link">← 返回首页</a>
+
+        <div class="tool-content">
+            <h1>🏠 房贷计算器</h1>
+            <p>计算贷款月供、利息等详细信息</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
+                <!-- 输入区 -->
+                <div>
+                    <h2>贷款信息</h2>
+
+                    <label for="loanAmount">���款金额 (元)：</label>
+                    <input type="number" id="loanAmount" placeholder="500000" step="1000" min="0">
+
+                    <label for="loanRate">年利率 (%)：</label>
+                    <input type="number" id="loanRate" placeholder="4.5" step="0.01" min="0">
+
+                    <label for="loanTerm">贷款期限 (年)：</label>
+                    <input type="number" id="loanTerm" placeholder="30" step="1" min="1">
+
+                    <h3 style="margin-top: 20px;">还款方式</h3>
+                    <label>
+                        <input type="radio" name="repaymentMethod" value="average" checked> 等额本息
+                    </label>
+                    <br>
+                    <label>
+                        <input type="radio" name="repaymentMethod" value="principal"> 等额本金
+                    </label>
+
+                    <button onclick="calculateMortgage()" style="margin-top: 20px;">计算</button>
+                </div>
+
+                <!-- 结果区 -->
+                <div>
+                    <h2>计算结果</h2>
+                    <div class="result-box">
+                        <p><strong>月供：</strong> <span id="monthlyPayment" style="font-size: 1.5rem; color: #6366f1;">-</span> 元</p>
+                        <p><strong>总利息：</strong> <span id="totalInterest">-</span> 元</p>
+                        <p><strong>还款总额：</strong> <span id="totalRepay">-</span> 元</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <h2>还款计划详情</h2>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="background-color: #f0f4ff;">
+                                <th style="border: 1px solid #e5e7eb; padding: 10px;">期数</th>
+                                <th style="border: 1px solid #e5e7eb; padding: 10px;">月供 (元)</th>
+                                <th style="border: 1px solid #e5e7eb; padding: 10px;">本金 (元)</th>
+                                <th style="border: 1px solid #e5e7eb; padding: 10px;">利息 (元)</th>
+                                <th style="border: 1px solid #e5e7eb; padding: 10px;">余额 (元)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scheduleTable">
+                            <tr><td colspan="5" style="text-align: center; padding: 20px; color: #6b7280;">请先计算</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <h2>使用说明</h2>
+                <ul style="line-height: 2;">
+                    <li>输入贷款金额、年利率和贷款期限</li>
+                    <li><strong>等额本息</strong>：每月还款相同，适合大多数购房者</li>
+                    <li><strong>等额本金</strong>：每月还款本金相同，总利息较少</li>
+                    <li>计算结果仅供参考，实际请咨询银行</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculateMortgage() {
+            const principal = parseFloat(document.getElementById('loanAmount').value);
+            const annualRate = parseFloat(document.getElementById('loanRate').value);
+            const years = parseFloat(document.getElementById('loanTerm').value);
+            const method = document.querySelector('input[name="repaymentMethod"]:checked').value;
+
+            if (!principal || !annualRate || !years) {
+                alert('请输入所有必要信息');
+                return;
+            }
+
+            const monthlyRate = annualRate / 100 / 12;
+            const months = years * 12;
+
+            let monthlyPayment, totalInterest, schedule = [];
+
+            if (method === 'average') {
+                // 等额本息
+                monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, months)) / (Math.pow(1 + monthlyRate, months) - 1);
+                
+                let balance = principal;
+                for (let i = 1; i <= months; i++) {
+                    const interest = balance * monthlyRate;
+                    const principalPayment = monthlyPayment - interest;
+                    balance -= principalPayment;
+
+                    if (i <= 12 || i % 12 === 0 || i === months) {
+                        schedule.push({
+                            period: i,
+                            payment: monthlyPayment,
+                            principal: principalPayment,
+                            interest: interest,
+                            balance: Math.max(balance, 0)
+                        });
+                    }
+                }
+
+                totalInterest = monthlyPayment * months - principal;
+            } else {
+                // 等额本金
+                const principalPayment = principal / months;
+                let balance = principal;
+                
+                for (let i = 1; i <= months; i++) {
+                    const interest = balance * monthlyRate;
+                    monthlyPayment = principalPayment + interest;
+                    balance -= principalPayment;
+
+                    if (i <= 12 || i % 12 === 0 || i === months) {
+                        schedule.push({
+                            period: i,
+                            payment: monthlyPayment,
+                            principal: principalPayment,
+                            interest: interest,
+                            balance: Math.max(balance, 0)
+                        });
+                    }
+                }
+
+                // 计算平均月供（仅用于显示）
+                totalInterest = schedule.reduce((sum, item) => sum + item.interest, 0);
+                monthlyPayment = schedule[0].payment;
+            }
+
+            // 显示结果
+            document.getElementById('monthlyPayment').textContent = monthlyPayment.toFixed(2);
+            document.getElementById('totalInterest').textContent = totalInterest.toFixed(2);
+            document.getElementById('totalRepay').textContent = (principal + totalInterest).toFixed(2);
+
+            // 生成还款计划表
+            generateScheduleTable(schedule);
+        }
+
+        function generateScheduleTable(schedule) {
+            const tbody = document.getElementById('scheduleTable');
+            tbody.innerHTML = '';
+
+            schedule.forEach(item => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td style="border: 1px solid #e5e7eb; padding: 10px;">${item.period}</td>
+                    <td style="border: 1px solid #e5e7eb; padding: 10px;">${item.payment.toFixed(2)}</td>
+                    <td style="border: 1px solid #e5e7eb; padding: 10px;">${item.principal.toFixed(2)}</td>
+                    <td style="border: 1px solid #e5e7eb; padding: 10px;">${item.interest.toFixed(2)}</td>
+                    <td style="border: 1px solid #e5e7eb; padding: 10px;">${item.balance.toFixed(2)}</td>
+                `;
+            });
+        }
+
+        // 回车键快捷计算
+        document.getElementById('loanTerm').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                calculateMortgage();
+            }
+        });
+    </script>
+</body>
+</html>
