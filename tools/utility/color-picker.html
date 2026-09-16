@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>颜色选择器 - Web Tools</title>
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-link">← 返回首页</a>
+
+        <div class="tool-content">
+            <h1>🎨 颜色选择器</h1>
+            <p>颜色选择、HEX/RGB/HSL 格式转换</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
+                <!-- 颜色选择区 -->
+                <div>
+                    <h2>选择颜色</h2>
+                    <input type="color" id="colorPicker" value="#6366f1" style="width: 100%; height: 120px; border: none; border-radius: 8px; cursor: pointer;">
+                    
+                    <div style="margin-top: 20px;">
+                        <label>或输入颜色代码：</label>
+                        <input type="text" id="colorInput" placeholder="#6366f1" value="#6366f1" style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                        <button onclick="updateFromInput()" style="width: 100%; margin-top: 10px;">更新</button>
+                    </div>
+                </div>
+
+                <!-- 颜色展示区 -->
+                <div>
+                    <h2>颜色预览</h2>
+                    <div id="colorPreview" style="width: 100%; height: 120px; background-color: #6366f1; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <button onclick="copyColor('hex')" style="padding: 10px;">复制 HEX</button>
+                        <button onclick="copyColor('rgb')" style="padding: 10px;">复制 RGB</button>
+                        <button onclick="copyColor('hsl')" style="padding: 10px;">复制 HSL</button>
+                        <button onclick="randomColor()" style="padding: 10px;">随机颜色</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <h2>颜色格式转换</h2>
+                <div class="result-box">
+                    <p><strong>HEX：</strong> <span id="hexValue">#6366f1</span></p>
+                    <p><strong>RGB：</strong> <span id="rgbValue">rgb(99, 102, 241)</span></p>
+                    <p><strong>HSL：</strong> <span id="hslValue">hsl(237, 89%, 67%)</span></p>
+                    <p><strong>颜色名称：</strong> <span id="colorName">紫色</span></p>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <h2>常用颜色</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px;" id="colorPalette">
+                    <!-- 色板将通过 JavaScript 生成 -->
+                </div>
+            </div>
+
+            <div style="margin-top: 40px;">
+                <h2>使用说明</h2>
+                <ul style="line-height: 2;">
+                    <li>使用颜色选择器选择颜色，或直接输入 HEX 代码</li>
+                    <li>支持 HEX、RGB、HSL 三种格式转换</li>
+                    <li>点击快速复制按钮快速复制各种格式</li>
+                    <li>点击"随机颜色"按钮生成随机颜色</li>
+                    <li>点击常用颜色直接选择</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const colorPicker = document.getElementById('colorPicker');
+        const colorInput = document.getElementById('colorInput');
+        const colorPreview = document.getElementById('colorPreview');
+
+        // 常用颜色
+        const commonColors = [
+            { hex: '#FF6B6B', name: '红色' },
+            { hex: '#FFA07A', name: '浅红' },
+            { hex: '#FFB347', name: '橙色' },
+            { hex: '#FFD93D', name: '黄色' },
+            { hex: '#6BCB77', name: '绿色' },
+            { hex: '#4D96FF', name: '蓝色' },
+            { hex: '#6366F1', name: '紫色' },
+            { hex: '#A78BFA', name: '浅紫' },
+            { hex: '#FF69B4', name: '粉红' },
+            { hex: '#20B2AA', name: '青色' },
+            { hex: '#9370DB', name: '媒紫' },
+            { hex: '#000000', name: '黑色' },
+            { hex: '#FFFFFF', name: '白色' },
+            { hex: '#808080', name: '灰色' },
+        ];
+
+        // 初始化
+        function init() {
+            updateColorDisplay('#6366f1');
+            generateColorPalette();
+            
+            colorPicker.addEventListener('change', (e) => {
+                updateColorDisplay(e.target.value);
+            });
+
+            colorPicker.addEventListener('input', (e) => {
+                updateColorDisplay(e.target.value);
+            });
+        }
+
+        function updateColorDisplay(hex) {
+            colorPicker.value = hex;
+            colorInput.value = hex;
+            colorPreview.style.backgroundColor = hex;
+
+            const rgb = hexToRgb(hex);
+            const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+
+            document.getElementById('hexValue').textContent = hex.toUpperCase();
+            document.getElementById('rgbValue').textContent = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+            document.getElementById('hslValue').textContent = `hsl(${Math.round(hsl.h)}, ${Math.round(hsl.s)}%, ${Math.round(hsl.l)}%)`;
+            
+            const colorName = getColorName(hex);
+            document.getElementById('colorName').textContent = colorName;
+        }
+
+        function updateFromInput() {
+            let hex = colorInput.value.trim();
+            if (!hex.startsWith('#')) {
+                hex = '#' + hex;
+            }
+            
+            if (/^#[0-9A-F]{6}$/i.test(hex)) {
+                updateColorDisplay(hex);
+            } else {
+                alert('请输入有效的 HEX 颜色代码（如 #6366f1）');
+            }
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function rgbToHsl(r, g, b) {
+            r /= 255;
+            g /= 255;
+            b /= 255;
+
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+                switch (max) {
+                    case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                    case g: h = ((b - r) / d + 2) / 6; break;
+                    case b: h = ((r - g) / d + 4) / 6; break;
+                }
+            }
+
+            return {
+                h: h * 360,
+                s: s * 100,
+                l: l * 100
+            };
+        }
+
+        function getColorName(hex) {
+            const upper = hex.toUpperCase();
+            const color = commonColors.find(c => c.hex === upper);
+            return color ? color.name : '自定义颜色';
+        }
+
+        function copyColor(format) {
+            const hex = document.getElementById('hexValue').textContent;
+            const rgb = document.getElementById('rgbValue').textContent;
+            const hsl = document.getElementById('hslValue').textContent;
+
+            let text = '';
+            if (format === 'hex') text = hex;
+            else if (format === 'rgb') text = rgb;
+            else if (format === 'hsl') text = hsl;
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制：' + text);
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('已复制：' + text);
+            });
+        }
+
+        function randomColor() {
+            const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+            updateColorDisplay(randomColor);
+        }
+
+        function generateColorPalette() {
+            const palette = document.getElementById('colorPalette');
+            palette.innerHTML = '';
+
+            commonColors.forEach(color => {
+                const div = document.createElement('div');
+                div.style.cssText = `
+                    background-color: ${color.hex};
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: transform 0.3s ease;
+                    height: 80px;
+                    display: flex;
+                    align-items: flex-end;
+                    justify-content: center;
+                    padding-bottom: 5px;
+                    color: ${color.name === '黑色' ? 'white' : 'black'};
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                `;
+                
+                div.textContent = color.name;
+                div.addEventListener('mouseover', () => {
+                    div.style.transform = 'scale(1.05)';
+                });
+                div.addEventListener('mouseout', () => {
+                    div.style.transform = 'scale(1)';
+                });
+                div.addEventListener('click', () => {
+                    updateColorDisplay(color.hex);
+                });
+
+                palette.appendChild(div);
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
