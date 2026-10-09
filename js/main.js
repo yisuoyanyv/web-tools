@@ -25,6 +25,14 @@ const tools = [
         description: '验证、格式化和压缩 JSON 数据',
         url: 'tools/converter/json-converter.html'
     },
+    {
+        id: 'base64-converter',
+        name: 'Base64 编解码',
+        icon: '🔤',
+        category: 'converter',
+        description: '文本与 Base64 互相转换，支持 UTF-8 与 URL 安全格式',
+        url: 'tools/converter/base64-converter.html'
+    },
     // 生成工具
     {
         id: 'password-generator',

@@ -462,6 +462,14 @@ body {
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 
+.tool-content input[type="checkbox"] {
+    width: auto;
+    padding: 0;
+    margin: 0;
+    border: none;
+    box-shadow: none;
+}
+
 .tool-content button {
     padding: 12px 24px;
     background-color: var(--primary-color);

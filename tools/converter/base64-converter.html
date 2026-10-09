@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 编解码 - Web Tools</title>
+    <link rel="stylesheet" href="../../css/style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="../../index.html" class="back-link">← 返回首页</a>
+
+        <div class="tool-content">
+            <h1>🔤 Base64 编解码</h1>
+            <p>文本与 Base64 互相转换，支持 UTF-8 与 URL 安全格式</p>
+
+            <div style="margin-top: 30px;">
+                <label for="base64Input">输入内容：</label>
+                <textarea id="base64Input" rows="10" placeholder="编码时输入原文，解码时输入 Base64 字符串"></textarea>
+
+                <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-weight: 500;">
+                    <input type="checkbox" id="urlSafe">
+                    URL 安全（用 - _ 替换 + /，编码时去掉末尾 =）
+                </label>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                    <button onclick="encodeBase64()">编码</button>
+                    <button onclick="decodeBase64()">解码</button>
+                    <button onclick="swapContent()" style="background-color: #8b5cf6;">交换</button>
+                    <button onclick="copyResult()" style="background-color: #10b981;">复制结果</button>
+                    <button onclick="clearAll()" style="background-color: #6b7280;">清空</button>
+                </div>
+
+                <div id="statusBox" class="result-box" style="display: none; margin-top: 0;"></div>
+
+                <label for="base64Output">输出结果：</label>
+                <textarea id="base64Output" rows="10" readonly placeholder="编码或解码后的结果会显示在这里"></textarea>
+            </div>
+
+            <div style="margin-top: 30px; padding: 20px; background-color: #f0f4ff; border-radius: 8px;">
+                <h3>💡 使用说明</h3>
+                <ul style="line-height: 2;">
+                    <li><strong>编码</strong>：把原文按 UTF-8 转成 Base64</li>
+                    <li><strong>解码</strong>：把 Base64 还原成文本；自动忽略空白，并识别 <code>data:...;base64,</code> 前缀</li>
+                    <li><strong>URL 安全</strong>：编码使用 <code>-</code> <code>_</code> 且不带填充；解码同时兼容标准与 URL 安全格式</li>
+                    <li><strong>交换</strong>：把结果放回输入框，方便连续编解码</li>
+                    <li>所有处理均在浏览器本地完成，不会上传数据</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showStatus(message, ok) {
+            const box = document.getElementById('statusBox');
+            box.style.display = 'block';
+            box.style.borderColor = ok ? '#10b981' : '#ef4444';
+            box.style.color = ok ? '#047857' : '#b91c1c';
+            box.textContent = message;
+        }
+
+        function utf8ToBase64(text) {
+            const bytes = new TextEncoder().encode(text);
+            let binary = '';
+            const chunk = 0x8000;
+            for (let i = 0; i < bytes.length; i += chunk) {
+                binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+            }
+            return btoa(binary);
+        }
+
+        function base64ToUtf8(encoded) {
+            const binary = atob(encoded);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        }
+
+        function toUrlSafe(encoded) {
+            return encoded.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+        }
+
+        function normalizeBase64(raw) {
+            let text = raw.trim().replace(/\s+/g, '');
+            const dataUrl = text.match(/^data:[^,]*,(.*)$/i);
+            if (dataUrl) {
+                text = dataUrl[1];
+            }
+            text = text.replace(/-/g, '+').replace(/_/g, '/');
+            const pad = text.length % 4;
+            if (pad === 1) {
+                throw new Error('Base64 长度不合法');
+            }
+            if (pad) {
+                text += '='.repeat(4 - pad);
+            }
+            if (!/^[A-Za-z0-9+/]*={0,2}$/.test(text)) {
+                throw new Error('包含非法 Base64 字符');
+            }
+            return text;
+        }
+
+        function encodeBase64() {
+            const text = document.getElementById('base64Input').value;
+            if (!text) {
+                showStatus('❌ 请先输入要编码的内容', false);
+                return;
+            }
+            try {
+                let encoded = utf8ToBase64(text);
+                if (document.getElementById('urlSafe').checked) {
+                    encoded = toUrlSafe(encoded);
+                }
+                document.getElementById('base64Output').value = encoded;
+                showStatus('✅ Base64 编码成功', true);
+            } catch (e) {
+                showStatus('❌ 编码失败：' + e.message, false);
+            }
+        }
+
+        function decodeBase64() {
+            const raw = document.getElementById('base64Input').value;
+            if (!raw.trim()) {
+                showStatus('❌ 请先输入要解码的 Base64', false);
+                return;
+            }
+            try {
+                const normalized = normalizeBase64(raw);
+                const text = base64ToUtf8(normalized);
+                document.getElementById('base64Output').value = text;
+                showStatus('✅ Base64 解码成功', true);
+            } catch (e) {
+                showStatus('❌ 解码失败：' + (e.message || '不是合法的 Base64 或 UTF-8 文本'), false);
+            }
+        }
+
+        function swapContent() {
+            const input = document.getElementById('base64Input');
+            const output = document.getElementById('base64Output');
+            if (!output.value) {
+                showStatus('❌ 没有可交换的结果', false);
+                return;
+            }
+            input.value = output.value;
+            output.value = '';
+            document.getElementById('statusBox').style.display = 'none';
+        }
+
+        function copyResult() {
+            const output = document.getElementById('base64Output').value;
+            if (!output) {
+                showStatus('❌ 没有可复制的内容', false);
+                return;
+            }
+            navigator.clipboard.writeText(output).then(() => {
+                showStatus('✅ 已复制到剪贴板', true);
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = output;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showStatus('✅ 已复制到剪贴板', true);
+            });
+        }
+
+        function clearAll() {
+            document.getElementById('base64Input').value = '';
+            document.getElementById('base64Output').value = '';
+            document.getElementById('urlSafe').checked = false;
+            document.getElementById('statusBox').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
